@@ -1,0 +1,191 @@
+import os
+import environ
+from pathlib import Path
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Initialize environ
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+
+# Read environment variables from .env file if it exists
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = env('SECRET_KEY', default='django-insecure-8(_^ddtmh44t2@r3b!vgc@-9l2d+*1a@ptpl-k&84+i74anbq=')
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = env('DEBUG')
+
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+
+# Google Auth Settings
+GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID', default='')
+
+
+# Application definition
+
+INSTALLED_APPS = [
+    # Daphne debe preceder a staticfiles para gestionar ASGI y WebSockets
+    'daphne',
+
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    
+    # Third party apps
+    'corsheaders',
+    'rest_framework',
+    'channels',
+    'rest_framework_simplejwt',
+
+    # Our apps
+    'apps.accounts',
+    'apps.ebooks',
+    'apps.content',
+    'apps.billing',
+    'apps.ai_engine',
+    'apps.exporter',
+    'apps.notifications',
+]
+
+# Usuario activo
+AUTH_USER_MODEL = 'accounts.User'
+
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # CORS middleware al inicio
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'config.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+# Channel Layers (Redis para tiempo real / WebSockets)
+# Compatible con Railway (REDIS_URL) y Docker Compose local (REDIS_HOST / REDIS_PORT)
+REDIS_URL = env('REDIS_URL', default=None)
+
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                # Dict format permite pasar opciones de socket al pool de redis-py
+                'hosts': [{
+                    'address': REDIS_URL,
+                    # Sin timeout en el socket: el consumer espera indefinidamente
+                    'socket_timeout': None,
+                    # Keepalive TCP para que el OS no cierre la conexion idle
+                    'socket_keepalive': True,
+                    'socket_connect_timeout': 10,
+                }],
+                'expiry': 300,
+                'capacity': 100,
+            },
+        },
+    }
+else:
+    REDIS_HOST = env('REDIS_HOST', default='127.0.0.1')
+    REDIS_PORT = env.int('REDIS_PORT', default=6379)
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                # Dict format permite pasar opciones de socket al pool de redis-py
+                'hosts': [{
+                    'address': (REDIS_HOST, REDIS_PORT),
+                    # Sin timeout en el socket: el consumer espera indefinidamente
+                    'socket_timeout': None,
+                    # Keepalive TCP para que el OS no cierre la conexion idle
+                    'socket_keepalive': True,
+                    'socket_connect_timeout': 10,
+                }],
+                'expiry': 300,
+                'capacity': 100,
+            },
+        },
+    }
+
+# Database
+# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+DATABASES = {
+    'default': env.db_url('DATABASE_URL', default=f"postgres://{env('DB_USER', default='postgres')}:{env('DB_PASSWORD', default='postgres')}@{env('DB_HOST', default='localhost')}:{env('DB_PORT', default='5432')}/{env('DB_NAME', default='pintaebook_db')}")
+}
+
+# Password validation
+# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    'DEFAULT_FILTER_BACKENDS': (
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ),
+}
+
+# CORS configuration
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+])
+CORS_ALLOW_CREDENTIALS = True
+
+# Internationalization
+# https://docs.djangoproject.com/en/6.0/topics/i18n/
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/6.0/howto/static-files/
+STATIC_URL = 'static/'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
