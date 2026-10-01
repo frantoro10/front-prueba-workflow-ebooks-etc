@@ -1,0 +1,11 @@
+services:
+  angular-tester:
+    build: .
+    container_name: pintaebook_angular_tester
+    ports:
+      - "4200:4200"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
