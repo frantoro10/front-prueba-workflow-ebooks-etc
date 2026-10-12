@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface Ebook {
   ebook_id: string;
@@ -67,7 +68,7 @@ export interface AiGenerateResponse {
 @Injectable({ providedIn: 'root' })
 export class EbookService {
   private readonly http = inject(HttpClient);
-  private readonly BASE = 'http://localhost:8000/api';
+  private readonly BASE = environment.apiUrl;
 
   listEbooks(): Observable<EbookListResponse> {
     return this.http.get<EbookListResponse>(`${this.BASE}/ebooks/`);

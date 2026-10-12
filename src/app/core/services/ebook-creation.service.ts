@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 /** Shape of every progress frame the WebSocket emits */
 export interface ProgressEvent {
@@ -33,8 +34,9 @@ export interface CreateEbookPayload {
 @Injectable({ providedIn: 'root' })
 export class EbookCreationService {
   private readonly http = inject(HttpClient);
-  private readonly BASE_HTTP = 'http://localhost:8000/api';
-  private readonly BASE_WS = 'localhost:8000';
+  private readonly BASE_HTTP = environment.apiUrl;
+  // El host del WebSocket se deriva de la misma URL de la API.
+  private readonly BASE_WS = new URL(environment.apiUrl).host;
 
   private socket: WebSocket | null = null;
   private progressSubject: Subject<ProgressEvent> | null = null;

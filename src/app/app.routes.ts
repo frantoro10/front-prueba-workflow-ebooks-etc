@@ -21,6 +21,24 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    // Catálogo de paquetes + botón "Comprar" (inicia el checkout de Mercado Pago)
+    path: 'billing',
+    loadComponent: () =>
+      import('./features/billing/packages.component').then(
+        (m) => m.PackagesComponent
+      ),
+    canActivate: [authGuard],
+  },
+  {
+    // A donde Mercado Pago devuelve al usuario: success | pending | failure
+    path: 'billing/result/:outcome',
+    loadComponent: () =>
+      import('./features/billing/payment-result.component').then(
+        (m) => m.PaymentResultComponent
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: 'editor/:id',
     loadComponent: () =>
       import('./features/editor/editor.component').then(

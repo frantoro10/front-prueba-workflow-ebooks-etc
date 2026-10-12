@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-auth',
@@ -213,13 +214,15 @@ import { AuthService } from '../../core/services/auth.service';
         </div>
 
         <p class="text-center text-slate-600 text-xs mt-6">
-          API: <span class="text-slate-500 font-mono">http://localhost:8000</span>
+          API: <span class="text-slate-500 font-mono">{{ apiUrl }}</span>
         </p>
       </div>
     </div>
   `,
 })
 export class AuthComponent {
+  readonly apiUrl = environment.apiUrl;
+
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
